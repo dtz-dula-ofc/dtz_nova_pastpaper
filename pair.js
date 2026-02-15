@@ -1137,104 +1137,107 @@ END:VCARD` } }
         }
 
         // ==================== PASTPAPER COMMAND (DIRECT SUBJECT SELECTION) ====================
-        case 'pastpaper':
-        case 'pp':
-        case 'pastpapers':
-        case 'papers':
-        case 'paper':
-        case 'pastpaperlk':
-        case 'pastpaperslk': {
-          try {
-            const axios = require('axios');
-            const { generateWAMessageFromContent, proto } = require('baileys');
+case 'pastpaper':
+case 'pp':
+case 'pastpapers':
+case 'papers':
+case 'paper':
+case 'pastpaperlk':
+case 'pastpaperslk': {
+  try {
+    const axios = require('axios');
+    
+    // Load user config
+    const sanitized = (number || '').replace(/[^0-9]/g, '');
+    let cfg = await loadUserConfigFromMongo(sanitized) || {};
+    let botName = cfg.botName || BOT_NAME_FANCY;
+    const prefix = cfg.PREFIX || config.PREFIX || '.';
 
-            // Load user config
-            const sanitized = (number || '').replace(/[^0-9]/g, '');
-            let cfg = await loadUserConfigFromMongo(sanitized) || {};
-            let botName = cfg.botName || BOT_NAME_FANCY;
-            const prefix = cfg.PREFIX || config.PREFIX || '.';
+    // Subjects with emojis (comprehensive list)
+    const SUBJECTS = {
+      'maths': '🧮 Mathematics',
+      'sinhala': '📝 Sinhala',
+      'english': '📘 English',
+      'tamil': '📗 Tamil',
+      'science': '🔬 Science',
+      'history': '🏛️ History',
+      'buddhism': '☸️ Buddhism',
+      'commerce': '💼 Commerce',
+      'accounting': '📊 Accounting',
+      'economics': '📈 Economics',
+      'physics': '⚛️ Physics',
+      'chemistry': '🧪 Chemistry',
+      'biology': '🧬 Biology',
+      'combinedmaths': '📐 Combined Maths',
+      'ict': '💻 ICT',
+      'agriculture': '🌾 Agriculture',
+      'geography': '🌍 Geography',
+      'political': '🏛️ Political Science',
+      'logic': '🧠 Logic',
+      'drama': '🎭 Drama',
+      'music': '🎵 Music',
+      'art': '🎨 Art',
+      'dancing': '💃 Dancing',
+      'health': '🏥 Health',
+      'orientalmusic': '🏯 Oriental Music',
+      'engineering': '⚙️ Engineering Technology',
+      'biosystems': '🌱 Bio Systems Technology',
+      'business': '💼 Business Studies',
+      'frech': '🇫🇷 French',
+      'german': '🇩🇪 German',
+      'japanese': '🇯🇵 Japanese',
+      'chinese': '🇨🇳 Chinese',
+      'hinduism': '🕉️ Hinduism',
+      'islam': '🕌 Islam',
+      'catholicism': '⛪ Catholicism',
+      'christianity': '✝️ Christianity'
+    };
 
-            // Subjects with emojis (comprehensive list)
-            const SUBJECTS = {
-              'maths': '🧮 Mathematics',
-              'sinhala': '📝 Sinhala',
-              'english': '📘 English',
-              'tamil': '📗 Tamil',
-              'science': '🔬 Science',
-              'history': '🏛️ History',
-              'buddhism': '☸️ Buddhism',
-              'commerce': '💼 Commerce',
-              'accounting': '📊 Accounting',
-              'economics': '📈 Economics',
-              'physics': '⚛️ Physics',
-              'chemistry': '🧪 Chemistry',
-              'biology': '🧬 Biology',
-              'combinedmaths': '📐 Combined Maths',
-              'ict': '💻 ICT',
-              'agriculture': '🌾 Agriculture',
-              'geography': '🌍 Geography',
-              'political': '🏛️ Political Science',
-              'logic': '🧠 Logic',
-              'drama': '🎭 Drama',
-              'music': '🎵 Music',
-              'art': '🎨 Art',
-              'dancing': '💃 Dancing',
-              'health': '🏥 Health',
-              'music': '🏯 Oriental Music',
-              'engineering': '⚙️ Engineering Technology',
-              'biosystems': '🌱 Bio Systems Technology',
-            };
-
-            // Fake Meta contact message for style
-            const botMention = {
-              key: {
-                remoteJid: "status@broadcast",
-                participant: "0@s.whatsapp.net",
-                fromMe: false,
-                id: "META_AI_FAKE_ID_PP_" + Date.now()
-              },
-              message: {
-                contactMessage: {
-                  displayName: botName,
-                  vcard: `BEGIN:VCARD
+    // Fake Meta contact message for style
+    const botMention = {
+      key: {
+        remoteJid: "status@broadcast",
+        participant: "0@s.whatsapp.net",
+        fromMe: false,
+        id: "META_AI_FAKE_ID_PP_" + Date.now()
+      },
+      message: {
+        contactMessage: {
+          displayName: botName,
+          vcard: `BEGIN:VCARD
 VERSION:3.0
 N:${botName};;;;
 FN:${botName}
 ORG:Education Hub Sri Lanka
-TEL;type=CELL;type=VOICE;waid=94752978237:+94 75 297 8237
 END:VCARD`
-                }
-              }
-            };
+        }
+      }
+    };
 
-            const userQuery = args.join(' ').trim();
-            const API_KEY = 'dew_BFJBP1gi0pxFIdCasrTqXjeZzcmoSpz4SE4FtG9B';
+    const userQuery = args.join(' ').trim();
+    const API_KEY = 'dew_BFJBP1gi0pxFIdCasrTqXjeZzcmoSpz4SE4FtG9B';
 
-            // --- MAIN MENU WITH SUBJECT BUTTONS (if no query) ---
-            if (!userQuery) {
-              // Create subject selection buttons (first 20 subjects)
-              const subjectButtons = Object.entries(SUBJECTS).slice(0, 20).map(([key, value]) => ({
-                buttonId: `${prefix}pastpaper ${key}`,
-                buttonText: { displayText: value },
-                type: 1
-              }));
-
-              // Add a "More Subjects" button if needed
-              if (Object.keys(SUBJECTS).length > 20) {
-                subjectButtons.push({
-                  buttonId: `${prefix}pastpaper more-subjects`,
-                  buttonText: { displayText: "📚 MORE SUBJECTS" },
-                  type: 1
-                });
-              }
-
-              const menuCaption = `╭───「 📚 *PAST PAPER HUB - SRI LANKA* 」───◆
+    // --- MAIN MENU WITH SUBJECT BUTTONS (if no query) ---
+    if (!userQuery) {
+      // Create subject selection buttons (organized in batches)
+      const subjectEntries = Object.entries(SUBJECTS);
+      const totalBatches = Math.ceil(subjectEntries.length / 10);
+      
+      // Create main menu with subject categories
+      const menuCaption = `╭───「 📚 *PAST PAPER HUB - SRI LANKA* 」───◆
 │
 │ 🎯 *Select Your Subject*
 │ 
-│ ┌─ [ AVAILABLE SUBJECTS ] ─────────┐
-│ ${Object.values(SUBJECTS).slice(0, 10).map(s => `│ ${s}`).join('\n')}
-│ ${Object.values(SUBJECTS).slice(10, 15).map(s => `│ ${s}`).join('\n')}
+│ ┌─ [ POPULAR SUBJECTS ] ──────────┐
+│ ${subjectEntries.slice(0, 5).map(([key, value]) => `│ ${value}`).join('\n')}
+│ └───────────────────────────────────┘
+│
+│ ┌─ [ SCIENCE & MATHS ] ───────────┐
+│ ${subjectEntries.slice(5, 10).map(([key, value]) => `│ ${value}`).join('\n')}
+│ └───────────────────────────────────┘
+│
+│ ┌─ [ COMMERCE & ARTS ] ───────────┐
+│ ${subjectEntries.slice(10, 15).map(([key, value]) => `│ ${value}`).join('\n')}
 │ └───────────────────────────────────┘
 │
 │ 📝 *Quick Commands:*
@@ -1245,191 +1248,308 @@ END:VCARD`
 │ • ${prefix}pastpaper maths
 │ • ${prefix}pastpaper physics
 │ • ${prefix}pastpaper chemistry
-│ • ${prefix}pastpaper english
 │
 ╰───────────────────────◆
 
 > *🇱🇰 Sri Lankan Educational Past Papers*
 > *Powered by ${botName}*`;
 
-              const buttonMessage = {
-                image: { url: "https://files.catbox.moe/1lp45l.png" },
-                caption: menuCaption,
-                footer: "👇 Click a button to select subject",
-                buttons: subjectButtons.slice(0, 20),
-                headerType: 4,
-                contextInfo: {
-                  externalAdReply: {
-                    title: "📚 Sri Lanka Past Paper Downloader",
-                    body: "All Subjects - Grade 1 to A/L",
-                    thumbnailUrl: "https://files.catbox.moe/1lp45l.png",
-                    sourceUrl: "https://pastpaper.lk",
-                    mediaType: 1,
-                    renderLargerThumbnail: true
-                  }
-                }
-              };
+      // Create buttons for first 20 subjects
+      const subjectButtons = subjectEntries.slice(0, 20).map(([key, value]) => ({
+        buttonId: `${prefix}pastpaper ${key}`,
+        buttonText: { displayText: value },
+        type: 1
+      }));
 
-              return await socket.sendMessage(sender, buttonMessage, { quoted: botMention });
-            }
+      // Add category buttons
+      const categoryButtons = [
+        {
+          buttonId: `${prefix}pastpaper science-maths`,
+          buttonText: { displayText: "🔬 Science & Maths" },
+          type: 1
+        },
+        {
+          buttonId: `${prefix}pastpaper commerce-arts`,
+          buttonText: { displayText: "💼 Commerce & Arts" },
+          type: 1
+        },
+        {
+          buttonId: `${prefix}pastpaper languages`,
+          buttonText: { displayText: "🌐 Languages" },
+          type: 1
+        },
+        {
+          buttonId: `${prefix}pastpaper religion`,
+          buttonText: { displayText: "🕉️ Religion" },
+          type: 1
+        },
+        {
+          buttonId: `${prefix}pastpaper technology`,
+          buttonText: { displayText: "⚙️ Technology" },
+          type: 1
+        }
+      ];
 
-            // --- HANDLE "MORE SUBJECTS" BUTTON ---
-            if (userQuery === 'more-subjects') {
-              // Show remaining subjects
-              const remainingSubjects = Object.entries(SUBJECTS).slice(20, 40).map(([key, value]) => ({
-                buttonId: `${prefix}pastpaper ${key}`,
-                buttonText: { displayText: value },
-                type: 1
-              }));
+      // Combine buttons (max 20)
+      const allButtons = [...categoryButtons, ...subjectButtons.slice(0, 15)];
 
-              const moreMenuCaption = `╭───「 📚 *MORE SUBJECTS* 」───◆
+      const buttonMessage = {
+        image: { url: "https://files.catbox.moe/x5x2vy.jpg" },
+        caption: menuCaption,
+        footer: "👇 Click a button to search",
+        buttons: allButtons,
+        headerType: 4,
+        contextInfo: {
+          externalAdReply: {
+            title: "📚 Sri Lanka Past Paper Downloader",
+            body: "All Subjects - Grade 5 to A/L",
+            thumbnailUrl: "https://files.catbox.moe/x5x2vy.jpg",
+            sourceUrl: "https://pastpaper.lk",
+            mediaType: 1,
+            renderLargerThumbnail: true
+          }
+        }
+      };
+
+      return await socket.sendMessage(sender, buttonMessage, { quoted: botMention });
+    }
+
+    // --- HANDLE CATEGORY BUTTONS ---
+    if (userQuery === 'science-maths') {
+      const scienceSubjects = Object.entries(SUBJECTS).filter(([key, value]) => 
+        ['physics', 'chemistry', 'biology', 'science', 'combinedmaths', 'maths', 'ict', 'engineering', 'biosystems'].includes(key)
+      );
+      
+      const buttons = scienceSubjects.map(([key, value]) => ({
+        buttonId: `${prefix}pastpaper ${key}`,
+        buttonText: { displayText: value },
+        type: 1
+      }));
+
+      const caption = `╭───「 🔬 *SCIENCE & MATHEMATICS* 」───◆
 │
 │ 🎯 *Select Your Subject*
 │ 
-│ ${Object.values(SUBJECTS).slice(20, 30).map(s => `│ ${s}`).join('\n')}
+${scienceSubjects.map(([key, value]) => `│ • ${value}`).join('\n')}
 │
 ╰───────────────────────◆
 
-> *Powered by ${botName}*`;
+> *Click a button below to search*`;
 
-              const buttonMessage = {
-                image: { url: "https://files.catbox.moe/1lp45l.png" },
-                caption: moreMenuCaption,
-                footer: "👇 Click a subject to search",
-                buttons: remainingSubjects.slice(0, 20),
-                headerType: 4
-              };
+      return await socket.sendMessage(sender, {
+        image: { url: "https://files.catbox.moe/x5x2vy.jpg" },
+        caption: caption,
+        footer: "📚 Past Paper Downloader",
+        buttons: buttons.slice(0, 20),
+        headerType: 4
+      }, { quoted: botMention });
+    }
 
-              return await socket.sendMessage(sender, buttonMessage, { quoted: botMention });
+    if (userQuery === 'commerce-arts') {
+      const commerceSubjects = Object.entries(SUBJECTS).filter(([key, value]) => 
+        ['commerce', 'accounting', 'economics', 'business', 'history', 'geography', 'political', 'logic', 'drama', 'music', 'art', 'dancing'].includes(key)
+      );
+      
+      const buttons = commerceSubjects.map(([key, value]) => ({
+        buttonId: `${prefix}pastpaper ${key}`,
+        buttonText: { displayText: value },
+        type: 1
+      }));
+
+      const caption = `╭───「 💼 *COMMERCE & ARTS* 」───◆
+│
+│ 🎯 *Select Your Subject*
+│ 
+${commerceSubjects.map(([key, value]) => `│ • ${value}`).join('\n')}
+│
+╰───────────────────────◆
+
+> *Click a button below to search*`;
+
+      return await socket.sendMessage(sender, {
+        image: { url: "https://files.catbox.moe/x5x2vy.jpg" },
+        caption: caption,
+        footer: "📚 Past Paper Downloader",
+        buttons: buttons.slice(0, 20),
+        headerType: 4
+      }, { quoted: botMention });
+    }
+
+    if (userQuery === 'languages') {
+      const langSubjects = Object.entries(SUBJECTS).filter(([key, value]) => 
+        ['sinhala', 'english', 'tamil', 'frech', 'german', 'japanese', 'chinese'].includes(key)
+      );
+      
+      const buttons = langSubjects.map(([key, value]) => ({
+        buttonId: `${prefix}pastpaper ${key}`,
+        buttonText: { displayText: value },
+        type: 1
+      }));
+
+      const caption = `╭───「 🌐 *LANGUAGES* 」───◆
+│
+│ 🎯 *Select Your Language Subject*
+│ 
+${langSubjects.map(([key, value]) => `│ • ${value}`).join('\n')}
+│
+╰───────────────────────◆
+
+> *Click a button below to search*`;
+
+      return await socket.sendMessage(sender, {
+        image: { url: "https://files.catbox.moe/x5x2vy.jpg" },
+        caption: caption,
+        footer: "📚 Past Paper Downloader",
+        buttons: buttons.slice(0, 20),
+        headerType: 4
+      }, { quoted: botMention });
+    }
+
+    if (userQuery === 'religion') {
+      const religionSubjects = Object.entries(SUBJECTS).filter(([key, value]) => 
+        ['buddhism', 'hinduism', 'islam', 'catholicism', 'christianity'].includes(key)
+      );
+      
+      const buttons = religionSubjects.map(([key, value]) => ({
+        buttonId: `${prefix}pastpaper ${key}`,
+        buttonText: { displayText: value },
+        type: 1
+      }));
+
+      const caption = `╭───「 🕉️ *RELIGION* 」───◆
+│
+│ 🎯 *Select Your Religion Subject*
+│ 
+${religionSubjects.map(([key, value]) => `│ • ${value}`).join('\n')}
+│
+╰───────────────────────◆
+
+> *Click a button below to search*`;
+
+      return await socket.sendMessage(sender, {
+        image: { url: "https://files.catbox.moe/x5x2vy.jpg" },
+        caption: caption,
+        footer: "📚 Past Paper Downloader",
+        buttons: buttons.slice(0, 20),
+        headerType: 4
+      }, { quoted: botMention });
+    }
+
+    if (userQuery === 'technology') {
+      const techSubjects = Object.entries(SUBJECTS).filter(([key, value]) => 
+        ['ict', 'engineering', 'biosystems', 'health'].includes(key)
+      );
+      
+      const buttons = techSubjects.map(([key, value]) => ({
+        buttonId: `${prefix}pastpaper ${key}`,
+        buttonText: { displayText: value },
+        type: 1
+      }));
+
+      const caption = `╭───「 ⚙️ *TECHNOLOGY* 」───◆
+│
+│ 🎯 *Select Your Technology Subject*
+│ 
+${techSubjects.map(([key, value]) => `│ • ${value}`).join('\n')}
+│
+╰───────────────────────◆
+
+> *Click a button below to search*`;
+
+      return await socket.sendMessage(sender, {
+        image: { url: "https://files.catbox.moe/x5x2vy.jpg" },
+        caption: caption,
+        footer: "📚 Past Paper Downloader",
+        buttons: buttons.slice(0, 20),
+        headerType: 4
+      }, { quoted: botMention });
+    }
+
+    // --- CHECK IF IT'S A URL (DOWNLOAD MODE) ---
+    if (userQuery.startsWith('http')) {
+      await socket.sendMessage(sender, { react: { text: '⬇️', key: msg.key } });
+      await socket.sendMessage(sender, { text: '*📥 Fetching past paper...*' }, { quoted: botMention });
+
+      try {
+        const downloadApiUrl = `https://api.srihub.store/education/pastpaperdl?url=${encodeURIComponent(userQuery)}&apikey=${API_KEY}`;
+        const dlRes = await axios.get(downloadApiUrl);
+
+        if (!dlRes.data?.success || !dlRes.data?.result) {
+          throw new Error('Invalid response from download API');
+        }
+
+        const paperInfo = dlRes.data.result;
+
+        let paperTitle = paperInfo.title || 'Past Paper';
+        if (!paperTitle || paperTitle === 'Past Paper') {
+          const urlParts = userQuery.split('/');
+          const lastPart = urlParts[urlParts.length - 2] || urlParts[urlParts.length - 1];
+          paperTitle = lastPart.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+        }
+
+        // Check if API returned PDF data
+        if (paperInfo.pdf_data) {
+          const pdfBuffer = Buffer.from(paperInfo.pdf_data, 'base64');
+          const fileSizeMB = (pdfBuffer.length / (1024 * 1024)).toFixed(2);
+
+          if (pdfBuffer.length > 100 * 1024 * 1024) {
+            const buttons = [
+              {
+                buttonId: `${prefix}pastpaper`,
+                buttonText: { displayText: "📚 SEARCH AGAIN" },
+                type: 1
+              },
+              {
+                buttonId: `${prefix}menu`,
+                buttonText: { displayText: "📋 MENU" },
+                type: 1
+              }
+            ];
+
+            return await socket.sendMessage(sender, {
+              text: `⚠️ File too large (${fileSizeMB} MB). WhatsApp limit is 100MB.\n\n🔗 *Direct link:* ${userQuery}`,
+              buttons: buttons
+            }, { quoted: botMention });
+          }
+
+          const fileName = paperTitle
+            .replace(/[^\w\s]/gi, '_')
+            .replace(/\s+/g, '_')
+            .substring(0, 50) + '.pdf';
+
+          const successButtons = [
+            {
+              buttonId: `${prefix}pastpaper`,
+              buttonText: { displayText: "📚 SEARCH AGAIN" },
+              type: 1
+            },
+            {
+              buttonId: `${prefix}pastpaper maths`,
+              buttonText: { displayText: "🧮 MATHS" },
+              type: 1
+            },
+            {
+              buttonId: `${prefix}pastpaper science`,
+              buttonText: { displayText: "🔬 SCIENCE" },
+              type: 1
+            },
+            {
+              buttonId: `${prefix}pastpaper english`,
+              buttonText: { displayText: "📘 ENGLISH" },
+              type: 1
+            },
+            {
+              buttonId: `${prefix}menu`,
+              buttonText: { displayText: "🏠 MENU" },
+              type: 1
             }
+          ];
 
-            // --- CHECK IF IT'S A URL (DOWNLOAD MODE) ---
-            if (userQuery.startsWith('http')) {
-              // Download Mode
-              await socket.sendMessage(sender, { react: { text: '⬇️', key: msg.key } });
-              await socket.sendMessage(sender, { text: '*📥 Fetching past paper...*' }, { quoted: botMention });
-
-              try {
-                const downloadApiUrl = `https://api.srihub.store/education/pastpaperdl?url=${encodeURIComponent(userQuery)}&apikey=${API_KEY}`;
-                const dlRes = await axios.get(downloadApiUrl);
-
-                if (!dlRes.data?.success || !dlRes.data?.result) {
-                  throw new Error('Invalid response from download API');
-                }
-
-                const paperInfo = dlRes.data.result;
-
-                let paperTitle = paperInfo.title || 'Past Paper';
-                if (!paperTitle || paperTitle === 'Past Paper') {
-                  const urlParts = userQuery.split('/');
-                  const lastPart = urlParts[urlParts.length - 2] || urlParts[urlParts.length - 1];
-                  paperTitle = lastPart.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-                }
-
-                let directPdfUrl = null;
-
-                try {
-                  const pageRes = await axios.get(userQuery, {
-                    timeout: 10000,
-                    headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' }
-                  });
-                  const html = pageRes.data;
-
-                  const patterns = [
-                    /<a[^>]*href=['"]([^'"]*\.pdf[^'"]*)['"][^>]*>.*?(?:Download|දාගන්න|Get|PDF).*?<\/a>/is,
-                    /href="([^"]*\.pdf[^"]*)"/i,
-                    /(?:https?:\/\/)?pastpaper\.lk[^\s"']+\.pdf/i,
-                    /<a[^>]*href=['"]([^'"]*download[^'"]*)['"]/i,
-                    /<a[^>]*href=['"]([^'"]*wp-content[^'"]*\.pdf[^'"]*)['"]/i
-                  ];
-
-                  for (const pattern of patterns) {
-                    const match = html.match(pattern);
-                    if (match && match[1]) {
-                      directPdfUrl = match[1].startsWith('http') ? match[1] : new URL(match[1], userQuery).href;
-                      break;
-                    }
-                  }
-                } catch (scrapeErr) {
-                  console.warn('Scraping error:', scrapeErr.message);
-                }
-
-                if (!directPdfUrl && paperInfo.url) {
-                  directPdfUrl = paperInfo.url;
-                }
-
-                if (!directPdfUrl) {
-                  const buttons = [
-                    {
-                      buttonId: `${prefix}pastpaper`,
-                      buttonText: { displayText: "📚 SEARCH AGAIN" },
-                      type: 1
-                    },
-                    {
-                      buttonId: `${prefix}menu`,
-                      buttonText: { displayText: "📋 MENU" },
-                      type: 1
-                    }
-                  ];
-
-                  return await socket.sendMessage(sender, {
-                    text: `❌ Could not find direct download link.\n\n🔗 *Link:* ${userQuery}\n\nYou may need to download manually from the website.`,
-                    buttons: buttons
-                  }, { quoted: botMention });
-                }
-
-                const fileRes = await axios.get(directPdfUrl, {
-                  responseType: 'arraybuffer',
-                  timeout: 30000,
-                  headers: { 'User-Agent': 'Mozilla/5.0' }
-                });
-
-                const fileBuffer = Buffer.from(fileRes.data);
-                const fileSizeMB = (fileBuffer.length / (1024 * 1024)).toFixed(2);
-
-                if (fileBuffer.length > 100 * 1024 * 1024) {
-                  const buttons = [
-                    {
-                      buttonId: `${prefix}pastpaper`,
-                      buttonText: { displayText: "📚 SEARCH AGAIN" },
-                      type: 1
-                    },
-                    {
-                      buttonId: `${prefix}menu`,
-                      buttonText: { displayText: "📋 MENU" },
-                      type: 1
-                    }
-                  ];
-
-                  return await socket.sendMessage(sender, {
-                    text: `⚠️ File too large (${fileSizeMB} MB). WhatsApp limit is 100MB.\n\n🔗 *Direct link:* ${directPdfUrl}`,
-                    buttons: buttons
-                  }, { quoted: botMention });
-                }
-
-                const fileName = paperTitle
-                  .replace(/[^\w\s]/gi, '_')
-                  .replace(/\s+/g, '_')
-                  .substring(0, 50) + '.pdf';
-
-                const successButtons = [
-                  {
-                    buttonId: `${prefix}pastpaper`,
-                    buttonText: { displayText: "📚 SEARCH AGAIN" },
-                    type: 1
-                  },
-                  {
-                    buttonId: `${prefix}menu`,
-                    buttonText: { displayText: "🏠 MENU" },
-                    type: 1
-                  }
-                ];
-
-                await socket.sendMessage(sender, {
-                  document: fileBuffer,
-                  mimetype: 'application/pdf',
-                  fileName: fileName,
-                  caption: `╭───「 📚 *PAST PAPER DOWNLOADED* 」───◆
+          await socket.sendMessage(sender, {
+            document: pdfBuffer,
+            mimetype: 'application/pdf',
+            fileName: fileName,
+            caption: `╭───「 📚 *PAST PAPER DOWNLOADED* 」───◆
 │
 │ 📄 *Title:* ${paperTitle.substring(0, 100)}
 │ 📦 *Size:* ${fileSizeMB} MB
@@ -1440,173 +1560,341 @@ END:VCARD`
 *✅ Downloaded via ${botName}*
 
 _Use buttons below for more papers_`,
-                  buttons: successButtons,
-                  contextInfo: {
-                    externalAdReply: {
-                      title: "📚 Past Paper Downloaded",
-                      body: paperTitle.substring(0, 50),
-                      thumbnailUrl: "https://files.catbox.moe/1lp45l.png",
-                      sourceUrl: userQuery,
-                      mediaType: 1,
-                      renderLargerThumbnail: true
-                    }
-                  }
-                }, { quoted: botMention });
-
-                await socket.sendMessage(sender, { react: { text: '✅', key: msg.key } });
-
-              } catch (dlErr) {
-                console.error('Download error:', dlErr);
-
-                const errorButtons = [
-                  {
-                    buttonId: `${prefix}pastpaper`,
-                    buttonText: { displayText: "🔄 TRY AGAIN" },
-                    type: 1
-                  },
-                  {
-                    buttonId: `${prefix}menu`,
-                    buttonText: { displayText: "📋 MENU" },
-                    type: 1
-                  }
-                ];
-
-                await socket.sendMessage(sender, {
-                  text: `❌ Download failed: ${dlErr.message || 'Unknown error'}\n\nTry visiting the link directly:\n${userQuery}`,
-                  buttons: errorButtons
-                }, { quoted: botMention });
+            buttons: successButtons,
+            contextInfo: {
+              externalAdReply: {
+                title: "📚 Past Paper Downloaded",
+                body: paperTitle.substring(0, 50),
+                thumbnailUrl: "https://files.catbox.moe/x5x2vy.jpg",
+                sourceUrl: userQuery,
+                mediaType: 1,
+                renderLargerThumbnail: true
               }
-              break;
             }
+          }, { quoted: botMention });
 
-            // --- REGULAR SEARCH MODE (by subject) ---
-            await socket.sendMessage(sender, { react: { text: '🔍', key: msg.key } });
-            await socket.sendMessage(sender, { text: `*🔎 Searching past papers for: ${userQuery}...*` }, { quoted: botMention });
+          await socket.sendMessage(sender, { react: { text: '✅', key: msg.key } });
+          break;
+        }
 
-            const searchApiUrl = `https://api.srihub.store/education/pastpaper?q=${encodeURIComponent(userQuery)}&apikey=${API_KEY}`;
-            const searchRes = await axios.get(searchApiUrl);
+        // If no PDF data, try to get PDF URL
+        let directPdfUrl = paperInfo.pdf_url || paperInfo.url;
 
-            if (!searchRes.data?.success || !searchRes.data?.result || searchRes.data.result.length === 0) {
-              const noResultsButtons = Object.entries(SUBJECTS).slice(0, 5).map(([key, value]) => ({
-                buttonId: `${prefix}pastpaper ${key}`,
-                buttonText: { displayText: value },
-                type: 1
-              }));
+        if (!directPdfUrl) {
+          // Try to scrape for PDF
+          try {
+            const pageRes = await axios.get(userQuery, {
+              timeout: 10000,
+              headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' }
+            });
+            const html = pageRes.data;
 
-              return await socket.sendMessage(sender, {
-                text: `❌ No past papers found for "${userQuery}".\n\nTry a different subject below:`,
-                buttons: noResultsButtons
-              }, { quoted: botMention });
-            }
-
-            const results = searchRes.data.result.slice(0, 8);
-
-            // Create buttons for each result
-            const resultButtons = results.map((item, index) => ({
-              buttonId: `paper_${index}`,
-              buttonText: { displayText: `📄 Paper ${index + 1}` },
-              type: 1
-            }));
-
-            // Add navigation buttons
-            const navButtons = [
-              {
-                buttonId: `${prefix}pastpaper`,
-                buttonText: { displayText: "📚 ALL SUBJECTS" },
-                type: 1
-              },
-              {
-                buttonId: `${prefix}menu`,
-                buttonText: { displayText: "🏠 MENU" },
-                type: 1
-              }
+            const patterns = [
+              /<a[^>]*href=['"]([^'"]*\.pdf[^'"]*)['"][^>]*>.*?(?:Download|දාගන්න|Get|PDF).*?<\/a>/is,
+              /href="([^"]*\.pdf[^"]*)"/i,
+              /(?:https?:\/\/)?pastpaper\.lk[^\s"']+\.pdf/i,
+              /<a[^>]*href=['"]([^'"]*download[^'"]*)['"]/i,
+              /<a[^>]*href=['"]([^'"]*wp-content[^'"]*\.pdf[^'"]*)['"]/i
             ];
 
-            let listMessage = `╭───「 📚 *SEARCH RESULTS* 」───◆
+            for (const pattern of patterns) {
+              const match = html.match(pattern);
+              if (match && match[1]) {
+                directPdfUrl = match[1].startsWith('http') ? match[1] : new URL(match[1], userQuery).href;
+                break;
+              }
+            }
+          } catch (scrapeErr) {
+            console.warn('Scraping error:', scrapeErr.message);
+          }
+        }
+
+        if (!directPdfUrl) {
+          const buttons = [
+            {
+              buttonId: `${prefix}pastpaper`,
+              buttonText: { displayText: "📚 SEARCH AGAIN" },
+              type: 1
+            },
+            {
+              buttonId: `${prefix}menu`,
+              buttonText: { displayText: "📋 MENU" },
+              type: 1
+            }
+          ];
+
+          return await socket.sendMessage(sender, {
+            text: `❌ Could not find direct download link.\n\n🔗 *Link:* ${userQuery}\n\nYou may need to download manually from the website.`,
+            buttons: buttons
+          }, { quoted: botMention });
+        }
+
+        const fileRes = await axios.get(directPdfUrl, {
+          responseType: 'arraybuffer',
+          timeout: 30000,
+          headers: { 'User-Agent': 'Mozilla/5.0' }
+        });
+
+        const fileBuffer = Buffer.from(fileRes.data);
+        const fileSizeMB = (fileBuffer.length / (1024 * 1024)).toFixed(2);
+
+        if (fileBuffer.length > 100 * 1024 * 1024) {
+          const buttons = [
+            {
+              buttonId: `${prefix}pastpaper`,
+              buttonText: { displayText: "📚 SEARCH AGAIN" },
+              type: 1
+            },
+            {
+              buttonId: `${prefix}menu`,
+              buttonText: { displayText: "📋 MENU" },
+              type: 1
+            }
+          ];
+
+          return await socket.sendMessage(sender, {
+            text: `⚠️ File too large (${fileSizeMB} MB). WhatsApp limit is 100MB.\n\n🔗 *Direct link:* ${directPdfUrl}`,
+            buttons: buttons
+          }, { quoted: botMention });
+        }
+
+        const fileName = paperTitle
+          .replace(/[^\w\s]/gi, '_')
+          .replace(/\s+/g, '_')
+          .substring(0, 50) + '.pdf';
+
+        const successButtons = [
+          {
+            buttonId: `${prefix}pastpaper`,
+            buttonText: { displayText: "📚 SEARCH AGAIN" },
+            type: 1
+          },
+          {
+            buttonId: `${prefix}pastpaper maths`,
+            buttonText: { displayText: "🧮 MATHS" },
+            type: 1
+          },
+          {
+            buttonId: `${prefix}pastpaper science`,
+            buttonText: { displayText: "🔬 SCIENCE" },
+            type: 1
+          },
+          {
+            buttonId: `${prefix}pastpaper english`,
+            buttonText: { displayText: "📘 ENGLISH" },
+            type: 1
+          },
+          {
+            buttonId: `${prefix}menu`,
+            buttonText: { displayText: "🏠 MENU" },
+            type: 1
+          }
+        ];
+
+        await socket.sendMessage(sender, {
+          document: fileBuffer,
+          mimetype: 'application/pdf',
+          fileName: fileName,
+          caption: `╭───「 📚 *PAST PAPER DOWNLOADED* 」───◆
+│
+│ 📄 *Title:* ${paperTitle.substring(0, 100)}
+│ 📦 *Size:* ${fileSizeMB} MB
+│ 🔗 *Source:* pastpaper.lk
+│
+╰───────────────────────◆
+
+*✅ Downloaded via ${botName}*
+
+_Use buttons below for more papers_`,
+          buttons: successButtons,
+          contextInfo: {
+            externalAdReply: {
+              title: "📚 Past Paper Downloaded",
+              body: paperTitle.substring(0, 50),
+              thumbnailUrl: "https://files.catbox.moe/x5x2vy.jpg",
+              sourceUrl: userQuery,
+              mediaType: 1,
+              renderLargerThumbnail: true
+            }
+          }
+        }, { quoted: botMention });
+
+        await socket.sendMessage(sender, { react: { text: '✅', key: msg.key } });
+
+      } catch (dlErr) {
+        console.error('Download error:', dlErr);
+
+        const errorButtons = [
+          {
+            buttonId: `${prefix}pastpaper`,
+            buttonText: { displayText: "🔄 TRY AGAIN" },
+            type: 1
+          },
+          {
+            buttonId: `${prefix}menu`,
+            buttonText: { displayText: "📋 MENU" },
+            type: 1
+          }
+        ];
+
+        await socket.sendMessage(sender, {
+          text: `❌ Download failed: ${dlErr.message || 'Unknown error'}\n\nTry visiting the link directly:\n${userQuery}`,
+          buttons: errorButtons
+        }, { quoted: botMention });
+      }
+      break;
+    }
+
+    // --- REGULAR SEARCH MODE (by subject) ---
+    await socket.sendMessage(sender, { react: { text: '🔍', key: msg.key } });
+    await socket.sendMessage(sender, { text: `*🔎 Searching past papers for: ${userQuery}...*` }, { quoted: botMention });
+
+    const searchApiUrl = `https://api.srihub.store/education/pastpaper?q=${encodeURIComponent(userQuery)}&apikey=${API_KEY}`;
+    const searchRes = await axios.get(searchApiUrl);
+
+    if (!searchRes.data?.success || !searchRes.data?.result || searchRes.data.result.length === 0) {
+      // Show popular subjects as suggestions
+      const suggestionButtons = [
+        { buttonId: `${prefix}pastpaper maths`, buttonText: { displayText: "🧮 MATHS" }, type: 1 },
+        { buttonId: `${prefix}pastpaper science`, buttonText: { displayText: "🔬 SCIENCE" }, type: 1 },
+        { buttonId: `${prefix}pastpaper english`, buttonText: { displayText: "📘 ENGLISH" }, type: 1 },
+        { buttonId: `${prefix}pastpaper sinhala`, buttonText: { displayText: "📝 SINHALA" }, type: 1 },
+        { buttonId: `${prefix}pastpaper history`, buttonText: { displayText: "🏛️ HISTORY" }, type: 1 }
+      ];
+
+      return await socket.sendMessage(sender, {
+        text: `❌ No past papers found for "${userQuery}".\n\nTry these popular subjects:`,
+        buttons: suggestionButtons
+      }, { quoted: botMention });
+    }
+
+    const results = searchRes.data.result.slice(0, 8);
+
+    // Create buttons for each result
+    const resultButtons = results.map((item, index) => ({
+      buttonId: `paper_${index}`,
+      buttonText: { displayText: `📄 ${item.title.substring(0, 30)}...` },
+      type: 1
+    }));
+
+    // Add quick subject buttons
+    const quickSubjectButtons = [
+      {
+        buttonId: `${prefix}pastpaper maths`,
+        buttonText: { displayText: "🧮 MATHS" },
+        type: 1
+      },
+      {
+        buttonId: `${prefix}pastpaper science`,
+        buttonText: { displayText: "🔬 SCIENCE" },
+        type: 1
+      },
+      {
+        buttonId: `${prefix}pastpaper english`,
+        buttonText: { displayText: "📘 ENGLISH" },
+        type: 1
+      }
+    ];
+
+    // Add navigation buttons
+    const navButtons = [
+      {
+        buttonId: `${prefix}pastpaper`,
+        buttonText: { displayText: "📚 ALL SUBJECTS" },
+        type: 1
+      },
+      {
+        buttonId: `${prefix}menu`,
+        buttonText: { displayText: "🏠 MENU" },
+        type: 1
+      }
+    ];
+
+    let listMessage = `╭───「 📚 *SEARCH RESULTS* 」───◆
 │
 │ *Subject:* ${userQuery}
 │ *Found:* ${searchRes.data.result.length} papers
 │
 `;
 
-            results.forEach((item, index) => {
-              let title = item.title
-                .replace(/G\.C\.E|GCE|Past Papers|Past papers/gi, '')
-                .replace(/\s+/g, ' ')
-                .trim()
-                .substring(0, 60);
+    results.forEach((item, index) => {
+      let title = item.title
+        .replace(/G\.C\.E|GCE|Past Papers|Past papers/gi, '')
+        .replace(/\s+/g, ' ')
+        .trim()
+        .substring(0, 60);
 
-              listMessage += `│ *${index + 1}.* ${title}\n`;
-            });
+      listMessage += `│ *${index + 1}.* ${title}\n`;
+    });
 
-            listMessage += `│
+    listMessage += `│
 ╰───────────────────────◆
 
 *📱 Click buttons below to download*
 > *Powered by ${botName}*`;
 
-            // Store results in cache
-            if (!global.ppSearchCache) global.ppSearchCache = {};
-            global.ppSearchCache[sender] = {
-              results: results,
-              timestamp: Date.now(),
-              query: userQuery
-            };
+    // Store results in cache
+    if (!global.ppSearchCache) global.ppSearchCache = {};
+    global.ppSearchCache[sender] = {
+      results: results,
+      timestamp: Date.now(),
+      query: userQuery
+    };
 
-            // Auto-clean cache after 10 minutes
-            setTimeout(() => {
-              if (global.ppSearchCache[sender]) delete global.ppSearchCache[sender];
-            }, 10 * 60 * 1000);
+    // Auto-clean cache after 10 minutes
+    setTimeout(() => {
+      if (global.ppSearchCache[sender]) delete global.ppSearchCache[sender];
+    }, 10 * 60 * 1000);
 
-            // Combine all buttons
-            const allButtons = [...resultButtons, ...navButtons];
+    // Combine all buttons (max 20)
+    const allButtons = [...resultButtons, ...quickSubjectButtons, ...navButtons].slice(0, 20);
 
-            // Send results with buttons
-            const thumbnail = results[0]?.image || "https://files.catbox.moe/1lp45l.png";
+    // Send results with buttons
+    const thumbnail = results[0]?.image || "https://files.catbox.moe/x5x2vy.jpg";
 
-            const buttonMessage = {
-              image: { url: thumbnail },
-              caption: listMessage,
-              footer: `📚 Past Paper Downloader - Sri Lanka`,
-              buttons: allButtons.slice(0, 12),
-              headerType: 4,
-              contextInfo: {
-                externalAdReply: {
-                  title: `📚 Results for: ${userQuery}`,
-                  body: `${results.length} papers found`,
-                  thumbnailUrl: thumbnail,
-                  sourceUrl: "https://pastpaper.lk",
-                  mediaType: 1,
-                  renderLargerThumbnail: true
-                }
-              }
-            };
-
-            await socket.sendMessage(sender, buttonMessage, { quoted: botMention });
-
-          } catch (err) {
-            console.error('Pastpaper command error:', err);
-
-            const errorButtons = [
-              {
-                buttonId: `${config.PREFIX || '.'}pastpaper`,
-                buttonText: { displayText: "🔄 TRY AGAIN" },
-                type: 1
-              },
-              {
-                buttonId: `${config.PREFIX || '.'}menu`,
-                buttonText: { displayText: "📋 MENU" },
-                type: 1
-              }
-            ];
-
-            await socket.sendMessage(sender, {
-              text: `❌ Error: ${err.message || 'Unknown error occurred'}`,
-              buttons: errorButtons
-            }, { quoted: msg });
-          }
-          break;
+    const buttonMessage = {
+      image: { url: thumbnail },
+      caption: listMessage,
+      footer: `📚 Past Paper Downloader - Sri Lanka`,
+      buttons: allButtons,
+      headerType: 4,
+      contextInfo: {
+        externalAdReply: {
+          title: `📚 Results for: ${userQuery}`,
+          body: `${results.length} papers found`,
+          thumbnailUrl: thumbnail,
+          sourceUrl: "https://pastpaper.lk",
+          mediaType: 1,
+          renderLargerThumbnail: true
         }
+      }
+    };
+
+    await socket.sendMessage(sender, buttonMessage, { quoted: botMention });
+
+  } catch (err) {
+    console.error('Pastpaper command error:', err);
+
+    const errorButtons = [
+      {
+        buttonId: `${config.PREFIX || '.'}pastpaper`,
+        buttonText: { displayText: "🔄 TRY AGAIN" },
+        type: 1
+      },
+      {
+        buttonId: `${config.PREFIX || '.'}menu`,
+        buttonText: { displayText: "📋 MENU" },
+        type: 1
+      }
+    ];
+
+    await socket.sendMessage(sender, {
+      text: `❌ Error: ${err.message || 'Unknown error occurred'}`,
+      buttons: errorButtons
+    }, { quoted: msg });
+  }
+  break;
+}
 
         // ==================== DEFAULT ====================
         default:
