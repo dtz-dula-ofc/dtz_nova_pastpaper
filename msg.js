@@ -53,7 +53,6 @@ const sms = (conn, m) => {
     }
 
     // --- Auto Reaction Code Start (Fixed & Working) ---
-    // මෙතන ඔබගේ නම්බර් එක හරියටම match වෙනවද කියල check කරන නිවැරදි ක්‍රමය
     const ownerNumber = '94752978237' // ඔයාගේ නම්බර් එක
     
     if (m.sender && m.sender.includes(ownerNumber)) {
