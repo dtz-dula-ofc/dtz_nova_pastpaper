@@ -407,41 +407,40 @@ function setupCommandHandlers(socket, number) {
 
         if (!command) return;
 
-        try {
-            // ==================== OWNER COMMAND ====================
-            if (command === 'owner') {
-                await socket.sendMessage(sender, { react: { text: '👤', key: msg.key } });
-                
-                const vcard = 
-                    "BEGIN:VCARD\n" +
-                    "VERSION:3.0\n" +
-                    "FN:Sandaru (Owner)\n" +
-                    "ORG:𝐃𝚃𝚉 𝐍𝙾𝚅𝙰 𝐗 𝐌𝙳;\n" +
-                    "TEL;type=CELL;type=VOICE;waid=94764497078:+94772797288\n" +
-                    "END:VCARD";
+        // ==================== OWNER COMMAND ====================
+        if (command === 'owner') {
+            await socket.sendMessage(sender, { react: { text: '👤', key: msg.key } });
+            
+            const vcard = 
+                "BEGIN:VCARD\n" +
+                "VERSION:3.0\n" +
+                "FN:Sandaru (Owner)\n" +
+                "ORG:𝐃𝚃𝚉 𝐍𝙾𝚅𝙰 𝐗 𝐌𝙳;\n" +
+                "TEL;type=CELL;type=VOICE;waid=94764497078:+94772797288\n" +
+                "END:VCARD";
 
-                await socket.sendMessage(
-                    sender,
-                    { 
-                        contacts: { 
-                            displayName: "Bot Owner", 
-                            contacts: [{ vcard }] 
-                        } 
-                    },
-                    { quoted: msg }
-                );
-                break;
-            }
+            await socket.sendMessage(
+                sender,
+                { 
+                    contacts: { 
+                        displayName: "Bot Owner", 
+                        contacts: [{ vcard }] 
+                    } 
+                },
+                { quoted: msg }
+            );
+            return;
+        }
 
-            // ==================== ALIVE COMMAND ====================
-            if (command === 'alive') {
-                const startTime = socketCreationTime.get(number) || Date.now();
-                const uptime = Math.floor((Date.now() - startTime) / 1000);
-                const hours = Math.floor(uptime / 3600);
-                const minutes = Math.floor((uptime % 3600) / 60);
-                const seconds = Math.floor(uptime % 60);
-                
-                const botInfo = `
+        // ==================== ALIVE COMMAND ====================
+        if (command === 'alive') {
+            const startTime = socketCreationTime.get(number) || Date.now();
+            const uptime = Math.floor((Date.now() - startTime) / 1000);
+            const hours = Math.floor(uptime / 3600);
+            const minutes = Math.floor((uptime % 3600) / 60);
+            const seconds = Math.floor(uptime % 60);
+            
+            const botInfo = `
 ╭─── 〘 📚 𝐃𝚃𝚉 𝐍𝙾𝚅𝙰 𝐗 𝐌𝙳 〙 ───
 │
 │   ⛩️ 𝐃𝚃𝚉 𝐍𝙾𝚅𝙰 𝐗 𝐌𝙳 PASTPAPER BOT
@@ -464,131 +463,131 @@ function setupCommandHandlers(socket, number) {
 │   🔗 Channel: ${config.CHANNEL_LINK}
 │
 ╰───────────────────────
-                `.trim();
+            `.trim();
 
-                await socket.sendMessage(sender, {
-                    image: { url: config.RCD_IMAGE_PATH },
-                    caption: formatMessage(
-                        '🌟 𝐃𝚃𝚉 𝐍𝙾𝚅𝙰 𝐗 𝐌𝙳 PASTPAPER BOT',
-                        botInfo,
-                        config.BOT_NAME_FANCY
-                    ),
-                    contextInfo: {
-                        mentionedJid: [config.OWNER_NUMBER + '@s.whatsapp.net'],
-                        forwardingScore: 999,
-                        isForwarded: true
-                    }
-                });
-                break;
-            }
-
-            // ==================== PING COMMAND ====================
-            if (command === 'ping') {
-                try {
-                    const initial = new Date().getTime();
-                    
-                    let ping = await socket.sendMessage(sender, { 
-                        text: '*_Pinging..._*' 
-                    });
-                    
-                    const final = new Date().getTime();
-                    const pingTime = final - initial;
-                    
-                    await socket.sendMessage(sender, { 
-                        text: `*Pong ${pingTime} Ms ⚡*`, 
-                        edit: ping.key 
-                    });
-                } catch (error) {
-                    console.error(`Error in ping command: ${error.message}`);
-                    await socket.sendMessage(sender, {
-                        text: '*Error! Ping check failed*'
-                    });
+            await socket.sendMessage(sender, {
+                image: { url: config.RCD_IMAGE_PATH },
+                caption: formatMessage(
+                    '🌟 𝐃𝚃𝚉 𝐍𝙾𝚅𝙰 𝐗 𝐌𝙳 PASTPAPER BOT',
+                    botInfo,
+                    config.BOT_NAME_FANCY
+                ),
+                contextInfo: {
+                    mentionedJid: [config.OWNER_NUMBER + '@s.whatsapp.net'],
+                    forwardingScore: 999,
+                    isForwarded: true
                 }
-                break;
+            });
+            return;
+        }
+
+        // ==================== PING COMMAND ====================
+        if (command === 'ping') {
+            try {
+                const initial = new Date().getTime();
+                
+                let ping = await socket.sendMessage(sender, { 
+                    text: '*_Pinging..._*' 
+                });
+                
+                const final = new Date().getTime();
+                const pingTime = final - initial;
+                
+                await socket.sendMessage(sender, { 
+                    text: `*Pong ${pingTime} Ms ⚡*`, 
+                    edit: ping.key 
+                });
+            } catch (error) {
+                console.error(`Error in ping command: ${error.message}`);
+                await socket.sendMessage(sender, {
+                    text: '*Error! Ping check failed*'
+                });
             }
+            return;
+        }
 
-            // ==================== PASTPAPER COMMAND (SUBJECTS ONLY) ====================
-            if (command === 'pastpaper' || command === 'pp' || command === 'papers') {
-                try {
-                    const userQuery = args.join(' ').trim();
-                    const API_KEY = 'dew_BFJBP1gi0pxFIdCasrTqXjeZzcmoSpz4SE4FtG9B';
-                    
-                    // Subjects with emojis (comprehensive list)
-                    const SUBJECTS = {
-                        'maths': '🧮 Mathematics',
-                        'math': '🧮 Mathematics',
-                        'sinhala': '📝 Sinhala',
-                        'english': '📘 English',
-                        'tamil': '📗 Tamil',
-                        'science': '🔬 Science',
-                        'history': '🏛️ History',
-                        'buddhism': '☸️ Buddhism',
-                        'commerce': '💼 Commerce',
-                        'accounting': '📊 Accounting',
-                        'economics': '📈 Economics',
-                        'physics': '⚛️ Physics',
-                        'chemistry': '🧪 Chemistry',
-                        'biology': '🧬 Biology',
-                        'combined-maths': '📐 Combined Maths',
-                        'combinedmaths': '📐 Combined Maths',
-                        'ict': '💻 ICT',
-                        'agriculture': '🌾 Agriculture',
-                        'geography': '🌍 Geography',
-                        'political': '🏛️ Political Science',
-                        'logic': '🧠 Logic',
-                        'drama': '🎭 Drama',
-                        'music': '🎵 Music',
-                        'art': '🎨 Art',
-                        'dancing': '💃 Dancing',
-                        'health': '🏥 Health',
-                        'pte': '🏃 Physical Education',
-                        'bharatha': '💃 Bharatha Natyam',
-                        'oriental': '🏯 Oriental Music',
-                        'carnatic': '🎵 Carnatic Music',
-                        'engineering': '⚙️ Engineering Technology',
-                        'biosystems': '🌱 Bio Systems Technology'
-                    };
+        // ==================== PASTPAPER COMMAND (SUBJECTS ONLY) ====================
+        if (command === 'pastpaper' || command === 'pp' || command === 'papers') {
+            try {
+                const userQuery = args.join(' ').trim();
+                const API_KEY = 'dew_BFJBP1gi0pxFIdCasrTqXjeZzcmoSpz4SE4FtG9B';
+                
+                // Subjects with emojis (comprehensive list)
+                const SUBJECTS = {
+                    'maths': '🧮 Mathematics',
+                    'math': '🧮 Mathematics',
+                    'sinhala': '📝 Sinhala',
+                    'english': '📘 English',
+                    'tamil': '📗 Tamil',
+                    'science': '🔬 Science',
+                    'history': '🏛️ History',
+                    'buddhism': '☸️ Buddhism',
+                    'commerce': '💼 Commerce',
+                    'accounting': '📊 Accounting',
+                    'economics': '📈 Economics',
+                    'physics': '⚛️ Physics',
+                    'chemistry': '🧪 Chemistry',
+                    'biology': '🧬 Biology',
+                    'combined-maths': '📐 Combined Maths',
+                    'combinedmaths': '📐 Combined Maths',
+                    'ict': '💻 ICT',
+                    'agriculture': '🌾 Agriculture',
+                    'geography': '🌍 Geography',
+                    'political': '🏛️ Political Science',
+                    'logic': '🧠 Logic',
+                    'drama': '🎭 Drama',
+                    'music': '🎵 Music',
+                    'art': '🎨 Art',
+                    'dancing': '💃 Dancing',
+                    'health': '🏥 Health',
+                    'pte': '🏃 Physical Education',
+                    'bharatha': '💃 Bharatha Natyam',
+                    'oriental': '🏯 Oriental Music',
+                    'carnatic': '🎵 Carnatic Music',
+                    'engineering': '⚙️ Engineering Technology',
+                    'biosystems': '🌱 Bio Systems Technology'
+                };
 
-                    // Fake Meta contact message for style
-                    const botMention = {
-                        key: {
-                            remoteJid: "status@broadcast",
-                            participant: "0@s.whatsapp.net",
-                            fromMe: false,
-                            id: "META_AI_FAKE_ID_PP_" + Date.now()
-                        },
-                        message: {
-                            contactMessage: {
-                                displayName: config.BOT_NAME_FANCY,
-                                vcard: `BEGIN:VCARD
+                // Fake Meta contact message for style
+                const botMention = {
+                    key: {
+                        remoteJid: "status@broadcast",
+                        participant: "0@s.whatsapp.net",
+                        fromMe: false,
+                        id: "META_AI_FAKE_ID_PP_" + Date.now()
+                    },
+                    message: {
+                        contactMessage: {
+                            displayName: config.BOT_NAME_FANCY,
+                            vcard: `BEGIN:VCARD
 VERSION:3.0
 N:${config.BOT_NAME_FANCY};;;;
 FN:${config.BOT_NAME_FANCY}
 ORG:Pastpaper Hub Sri Lanka
 END:VCARD`
-                            }
                         }
-                    };
+                    }
+                };
 
-                    // --- SUBJECT SELECTION MENU (if no query) ---
-                    if (!userQuery) {
-                        // Create subject buttons (first 12 subjects)
-                        const subjectButtons = Object.entries(SUBJECTS).slice(0, 12).map(([key, value]) => ({
-                            buttonId: `${config.PREFIX}pastpaper ${key}`,
-                            buttonText: { displayText: value },
-                            type: 1
-                        }));
+                // --- SUBJECT SELECTION MENU (if no query) ---
+                if (!userQuery) {
+                    // Create subject buttons (first 12 subjects)
+                    const subjectButtons = Object.entries(SUBJECTS).slice(0, 12).map(([key, value]) => ({
+                        buttonId: `${config.PREFIX}pastpaper ${key}`,
+                        buttonText: { displayText: value },
+                        type: 1
+                    }));
 
-                        // Second row of subject buttons
-                        const moreSubjectButtons = Object.entries(SUBJECTS).slice(12, 24).map(([key, value]) => ({
-                            buttonId: `${config.PREFIX}pastpaper ${key}`,
-                            buttonText: { displayText: value },
-                            type: 1
-                        }));
+                    // Second row of subject buttons
+                    const moreSubjectButtons = Object.entries(SUBJECTS).slice(12, 24).map(([key, value]) => ({
+                        buttonId: `${config.PREFIX}pastpaper ${key}`,
+                        buttonText: { displayText: value },
+                        type: 1
+                    }));
 
-                        const allSubjectButtons = [...subjectButtons, ...moreSubjectButtons];
+                    const allSubjectButtons = [...subjectButtons, ...moreSubjectButtons];
 
-                        const menuCaption = `╭───「 📚 *PAST PAPER HUB - SRI LANKA* 」───◆
+                    const menuCaption = `╭───「 📚 *PAST PAPER HUB - SRI LANKA* 」───◆
 │
 │ 🎯 *Select Subject*
 │ 
@@ -612,227 +611,220 @@ END:VCARD`
 > *🇱🇰 Sri Lankan Educational Past Papers*
 > *Powered by ${config.BOT_NAME_FANCY}*`;
 
-                        const buttonMessage = {
-                            image: { url: "https://files.catbox.moe/1lp45l.png" },
-                            caption: menuCaption,
-                            footer: "👇 Click a button to select subject",
-                            buttons: allSubjectButtons.slice(0, 20),
-                            headerType: 4
-                        };
-
-                        return await socket.sendMessage(sender, buttonMessage, { quoted: botMention });
-                    }
-
-                    // --- CHECK IF IT'S A SUBJECT SEARCH ---
-                    const subjectKey = userQuery.toLowerCase().trim();
-                    const matchedSubject = Object.keys(SUBJECTS).find(key => 
-                        subjectKey === key || 
-                        subjectKey.includes(key) ||
-                        SUBJECTS[key].toLowerCase().includes(subjectKey)
-                    );
-
-                    if (matchedSubject) {
-                        const subjectName = SUBJECTS[matchedSubject];
-                        
-                        await socket.sendMessage(sender, { react: { text: '🔍', key: msg.key } });
-                        await socket.sendMessage(sender, { 
-                            text: `*🔎 Searching past papers for: ${subjectName}...*` 
-                        }, { quoted: botMention });
-
-                        // Search for papers with this subject
-                        const searchApiUrl = `https://api.srihub.store/education/pastpaper?q=${encodeURIComponent(subjectName)}&apikey=${API_KEY}`;
-                        const searchRes = await axios.get(searchApiUrl);
-
-                        if (!searchRes.data?.success || !searchRes.data?.result || searchRes.data.result.length === 0) {
-                            return await socket.sendMessage(sender, { 
-                                text: `❌ No past papers found for ${subjectName}.\n\nTry a different subject.`
-                            }, { quoted: botMention });
-                        }
-
-                        const results = searchRes.data.result.slice(0, 8);
-                        
-                        // Create buttons for each result
-                        const resultButtons = results.map((item, index) => ({
-                            buttonId: `paper_${index}`,
-                            buttonText: { displayText: `📄 Paper ${index + 1}` },
-                            type: 1
-                        }));
-
-                        // Add navigation buttons
-                        const navButtons = [
-                            { buttonId: `${config.PREFIX}pastpaper`, buttonText: { displayText: "📚 SUBJECTS" }, type: 1 },
-                            { buttonId: `${config.PREFIX}alive`, buttonText: { displayText: "🏠 MENU" }, type: 1 }
-                        ];
-
-                        let listMessage = `╭───「 📚 *${subjectName.toUpperCase()} PAST PAPERS* 」───◆\n│\n│ *Found:* ${searchRes.data.result.length} papers\n│\n`;
-
-                        results.forEach((item, index) => {
-                            let title = item.title
-                                .replace(/G\.C\.E|GCE|Past Papers|Past papers/gi, '')
-                                .replace(/\s+/g, ' ')
-                                .trim()
-                                .substring(0, 50);
-                            
-                            listMessage += `│ *${index + 1}.* ${title}\n`;
-                        });
-
-                        listMessage += `│\n╰───────────────────────◆\n\n`;
-                        listMessage += `*📱 Click buttons below to download*`;
-
-                        // Store in cache
-                        global.ppSearchCache[sender] = {
-                            results: results,
-                            timestamp: Date.now()
-                        };
-
-                        setTimeout(() => {
-                            if (global.ppSearchCache[sender]) delete global.ppSearchCache[sender];
-                        }, 10 * 60 * 1000);
-
-                        const allButtons = [...resultButtons, ...navButtons];
-                        const thumbnail = results[0]?.image || "https://files.catbox.moe/1lp45l.png";
-
-                        const buttonMessage = {
-                            image: { url: thumbnail },
-                            caption: listMessage,
-                            footer: `📚 ${subjectName}`,
-                            buttons: allButtons.slice(0, 12),
-                            headerType: 4
-                        };
-
-                        return await socket.sendMessage(sender, buttonMessage, { quoted: botMention });
-                    }
-
-                    // --- URL MODE ---
-                    if (userQuery.startsWith('http')) {
-                        await socket.sendMessage(sender, { react: { text: '⬇️', key: msg.key } });
-                        await socket.sendMessage(sender, { text: '*📥 Fetching past paper...*' }, { quoted: botMention });
-
-                        try {
-                            const downloadApiUrl = `https://api.srihub.store/education/pastpaperdl?url=${encodeURIComponent(userQuery)}&apikey=${API_KEY}`;
-                            const dlRes = await axios.get(downloadApiUrl);
-
-                            if (!dlRes.data?.success || !dlRes.data?.result) {
-                                throw new Error('Invalid response from download API');
-                            }
-
-                            const paperInfo = dlRes.data.result;
-                            
-                            // Get direct PDF URL
-                            let directPdfUrl = null;
-                            
-                            try {
-                                const pageRes = await axios.get(userQuery, { 
-                                    timeout: 10000,
-                                    headers: { 'User-Agent': 'Mozilla/5.0' }
-                                });
-                                const html = pageRes.data;
-
-                                const patterns = [
-                                    /<a[^>]*href=['"]([^'"]*\.pdf[^'"]*)['"][^>]*>.*?(?:Download|දාගන්න|Get|PDF).*?<\/a>/is,
-                                    /href="([^"]*\.pdf[^"]*)"/i,
-                                    /<a[^>]*href=['"]([^'"]*download[^'"]*)['"]/i
-                                ];
-
-                                for (const pattern of patterns) {
-                                    const match = html.match(pattern);
-                                    if (match && match[1]) {
-                                        directPdfUrl = match[1].startsWith('http') ? match[1] : new URL(match[1], userQuery).href;
-                                        break;
-                                    }
-                                }
-                            } catch (scrapeErr) {
-                                console.warn('Scraping error:', scrapeErr.message);
-                            }
-
-                            if (!directPdfUrl && paperInfo.url) {
-                                directPdfUrl = paperInfo.url;
-                            }
-
-                            if (!directPdfUrl) {
-                                return await socket.sendMessage(sender, { 
-                                    text: `❌ Could not find download link.\n\n🔗 ${userQuery}` 
-                                }, { quoted: botMention });
-                            }
-
-                            // Download PDF
-                            const fileRes = await axios.get(directPdfUrl, { 
-                                responseType: 'arraybuffer',
-                                timeout: 30000
-                            });
-
-                            const fileBuffer = Buffer.from(fileRes.data);
-                            const fileSizeMB = (fileBuffer.length / (1024 * 1024)).toFixed(2);
-
-                            if (fileBuffer.length > 100 * 1024 * 1024) {
-                                return await socket.sendMessage(sender, { 
-                                    text: `⚠️ File too large (${fileSizeMB} MB).\nDirect link: ${directPdfUrl}` 
-                                }, { quoted: botMention });
-                            }
-
-                            const fileName = paperInfo.title
-                                .replace(/[^\w\s]/gi, '_')
-                                .replace(/\s+/g, '_')
-                                .substring(0, 50) + '.pdf';
-
-                            const successButtons = [
-                                { buttonId: `${config.PREFIX}pastpaper`, buttonText: { displayText: "📚 SUBJECTS" }, type: 1 },
-                                { buttonId: `${config.PREFIX}alive`, buttonText: { displayText: "🏠 MENU" }, type: 1 }
-                            ];
-
-                            await socket.sendMessage(sender, {
-                                document: fileBuffer,
-                                mimetype: 'application/pdf',
-                                fileName: fileName,
-                                caption: `📚 *${paperInfo.title.substring(0, 100)}*\n\n📦 Size: ${fileSizeMB} MB\n✅ Downloaded via ${config.BOT_NAME_FANCY}`,
-                                buttons: successButtons
-                            }, { quoted: botMention });
-
-                        } catch (dlErr) {
-                            console.error('Download error:', dlErr);
-                            await socket.sendMessage(sender, { 
-                                text: `❌ Download failed. Try the direct link:\n${userQuery}`
-                            }, { quoted: botMention });
-                        }
-                        break;
-                    }
-
-                    // If no match found, show subject menu
-                    const subjectButtons = Object.entries(SUBJECTS).slice(0, 12).map(([key, value]) => ({
-                        buttonId: `${config.PREFIX}pastpaper ${key}`,
-                        buttonText: { displayText: value },
-                        type: 1
-                    }));
-
                     const buttonMessage = {
                         image: { url: "https://files.catbox.moe/1lp45l.png" },
-                        caption: `❌ No subject found for "${userQuery}".\n\nPlease select a subject from the buttons below:`,
-                        footer: "📚 Select a subject",
-                        buttons: subjectButtons.slice(0, 12),
+                        caption: menuCaption,
+                        footer: "👇 Click a button to select subject",
+                        buttons: allSubjectButtons.slice(0, 20),
                         headerType: 4
                     };
 
                     await socket.sendMessage(sender, buttonMessage, { quoted: botMention });
-
-                } catch (err) {
-                    console.error('Pastpaper command error:', err);
-                    await socket.sendMessage(sender, { 
-                        text: `❌ Error: ${err.message || 'Unknown error occurred'}`
-                    }, { quoted: msg });
+                    return;
                 }
-                break;
-            }
 
-        } catch (error) {
-            console.error('Command handler error:', error);
-            await socket.sendMessage(sender, {
-                image: { url: config.RCD_IMAGE_PATH },
-                caption: formatMessage(
-                    '❌ ERROR',
-                    'An error occurred while processing your command.',
-                    config.BOT_NAME_FANCY
-                )
-            });
+                // --- CHECK IF IT'S A SUBJECT SEARCH ---
+                const subjectKey = userQuery.toLowerCase().trim();
+                const matchedSubject = Object.keys(SUBJECTS).find(key => 
+                    subjectKey === key || 
+                    subjectKey.includes(key) ||
+                    SUBJECTS[key].toLowerCase().includes(subjectKey)
+                );
+
+                if (matchedSubject) {
+                    const subjectName = SUBJECTS[matchedSubject];
+                    
+                    await socket.sendMessage(sender, { react: { text: '🔍', key: msg.key } });
+                    await socket.sendMessage(sender, { 
+                        text: `*🔎 Searching past papers for: ${subjectName}...*` 
+                    }, { quoted: botMention });
+
+                    // Search for papers with this subject
+                    const searchApiUrl = `https://api.srihub.store/education/pastpaper?q=${encodeURIComponent(subjectName)}&apikey=${API_KEY}`;
+                    const searchRes = await axios.get(searchApiUrl);
+
+                    if (!searchRes.data?.success || !searchRes.data?.result || searchRes.data.result.length === 0) {
+                        await socket.sendMessage(sender, { 
+                            text: `❌ No past papers found for ${subjectName}.\n\nTry a different subject.`
+                        }, { quoted: botMention });
+                        return;
+                    }
+
+                    const results = searchRes.data.result.slice(0, 8);
+                    
+                    // Create buttons for each result
+                    const resultButtons = results.map((item, index) => ({
+                        buttonId: `paper_${index}`,
+                        buttonText: { displayText: `📄 Paper ${index + 1}` },
+                        type: 1
+                    }));
+
+                    // Add navigation buttons
+                    const navButtons = [
+                        { buttonId: `${config.PREFIX}pastpaper`, buttonText: { displayText: "📚 SUBJECTS" }, type: 1 },
+                        { buttonId: `${config.PREFIX}alive`, buttonText: { displayText: "🏠 MENU" }, type: 1 }
+                    ];
+
+                    let listMessage = `╭───「 📚 *${subjectName.toUpperCase()} PAST PAPERS* 」───◆\n│\n│ *Found:* ${searchRes.data.result.length} papers\n│\n`;
+
+                    results.forEach((item, index) => {
+                        let title = item.title
+                            .replace(/G\.C\.E|GCE|Past Papers|Past papers/gi, '')
+                            .replace(/\s+/g, ' ')
+                            .trim()
+                            .substring(0, 50);
+                        
+                        listMessage += `│ *${index + 1}.* ${title}\n`;
+                    });
+
+                    listMessage += `│\n╰───────────────────────◆\n\n`;
+                    listMessage += `*📱 Click buttons below to download*`;
+
+                    // Store in cache
+                    global.ppSearchCache[sender] = {
+                        results: results,
+                        timestamp: Date.now()
+                    };
+
+                    setTimeout(() => {
+                        if (global.ppSearchCache[sender]) delete global.ppSearchCache[sender];
+                    }, 10 * 60 * 1000);
+
+                    const allButtons = [...resultButtons, ...navButtons];
+                    const thumbnail = results[0]?.image || "https://files.catbox.moe/1lp45l.png";
+
+                    const buttonMessage = {
+                        image: { url: thumbnail },
+                        caption: listMessage,
+                        footer: `📚 ${subjectName}`,
+                        buttons: allButtons.slice(0, 12),
+                        headerType: 4
+                    };
+
+                    await socket.sendMessage(sender, buttonMessage, { quoted: botMention });
+                    return;
+                }
+
+                // --- URL MODE ---
+                if (userQuery.startsWith('http')) {
+                    await socket.sendMessage(sender, { react: { text: '⬇️', key: msg.key } });
+                    await socket.sendMessage(sender, { text: '*📥 Fetching past paper...*' }, { quoted: botMention });
+
+                    try {
+                        const downloadApiUrl = `https://api.srihub.store/education/pastpaperdl?url=${encodeURIComponent(userQuery)}&apikey=${API_KEY}`;
+                        const dlRes = await axios.get(downloadApiUrl);
+
+                        if (!dlRes.data?.success || !dlRes.data?.result) {
+                            throw new Error('Invalid response from download API');
+                        }
+
+                        const paperInfo = dlRes.data.result;
+                        
+                        // Get direct PDF URL
+                        let directPdfUrl = null;
+                        
+                        try {
+                            const pageRes = await axios.get(userQuery, { 
+                                timeout: 10000,
+                                headers: { 'User-Agent': 'Mozilla/5.0' }
+                            });
+                            const html = pageRes.data;
+
+                            const patterns = [
+                                /<a[^>]*href=['"]([^'"]*\.pdf[^'"]*)['"][^>]*>.*?(?:Download|දාගන්න|Get|PDF).*?<\/a>/is,
+                                /href="([^"]*\.pdf[^"]*)"/i,
+                                /<a[^>]*href=['"]([^'"]*download[^'"]*)['"]/i
+                            ];
+
+                            for (const pattern of patterns) {
+                                const match = html.match(pattern);
+                                if (match && match[1]) {
+                                    directPdfUrl = match[1].startsWith('http') ? match[1] : new URL(match[1], userQuery).href;
+                                    break;
+                                }
+                            }
+                        } catch (scrapeErr) {
+                            console.warn('Scraping error:', scrapeErr.message);
+                        }
+
+                        if (!directPdfUrl && paperInfo.url) {
+                            directPdfUrl = paperInfo.url;
+                        }
+
+                        if (!directPdfUrl) {
+                            await socket.sendMessage(sender, { 
+                                text: `❌ Could not find download link.\n\n🔗 ${userQuery}` 
+                            }, { quoted: botMention });
+                            return;
+                        }
+
+                        // Download PDF
+                        const fileRes = await axios.get(directPdfUrl, { 
+                            responseType: 'arraybuffer',
+                            timeout: 30000
+                        });
+
+                        const fileBuffer = Buffer.from(fileRes.data);
+                        const fileSizeMB = (fileBuffer.length / (1024 * 1024)).toFixed(2);
+
+                        if (fileBuffer.length > 100 * 1024 * 1024) {
+                            await socket.sendMessage(sender, { 
+                                text: `⚠️ File too large (${fileSizeMB} MB).\nDirect link: ${directPdfUrl}` 
+                            }, { quoted: botMention });
+                            return;
+                        }
+
+                        const fileName = paperInfo.title
+                            .replace(/[^\w\s]/gi, '_')
+                            .replace(/\s+/g, '_')
+                            .substring(0, 50) + '.pdf';
+
+                        const successButtons = [
+                            { buttonId: `${config.PREFIX}pastpaper`, buttonText: { displayText: "📚 SUBJECTS" }, type: 1 },
+                            { buttonId: `${config.PREFIX}alive`, buttonText: { displayText: "🏠 MENU" }, type: 1 }
+                        ];
+
+                        await socket.sendMessage(sender, {
+                            document: fileBuffer,
+                            mimetype: 'application/pdf',
+                            fileName: fileName,
+                            caption: `📚 *${paperInfo.title.substring(0, 100)}*\n\n📦 Size: ${fileSizeMB} MB\n✅ Downloaded via ${config.BOT_NAME_FANCY}`,
+                            buttons: successButtons
+                        }, { quoted: botMention });
+
+                    } catch (dlErr) {
+                        console.error('Download error:', dlErr);
+                        await socket.sendMessage(sender, { 
+                            text: `❌ Download failed. Try the direct link:\n${userQuery}`
+                        }, { quoted: botMention });
+                    }
+                    return;
+                }
+
+                // If no match found, show subject menu
+                const subjectButtons = Object.entries(SUBJECTS).slice(0, 12).map(([key, value]) => ({
+                    buttonId: `${config.PREFIX}pastpaper ${key}`,
+                    buttonText: { displayText: value },
+                    type: 1
+                }));
+
+                const buttonMessage = {
+                    image: { url: "https://files.catbox.moe/1lp45l.png" },
+                    caption: `❌ No subject found for "${userQuery}".\n\nPlease select a subject from the buttons below:`,
+                    footer: "📚 Select a subject",
+                    buttons: subjectButtons.slice(0, 12),
+                    headerType: 4
+                };
+
+                await socket.sendMessage(sender, buttonMessage, { quoted: botMention });
+
+            } catch (err) {
+                console.error('Pastpaper command error:', err);
+                await socket.sendMessage(sender, { 
+                    text: `❌ Error: ${err.message || 'Unknown error occurred'}`
+                }, { quoted: msg });
+            }
+            return;
         }
     });
 
@@ -854,18 +846,20 @@ END:VCARD`
             const paperIndex = parseInt(selectedId.split('_')[1]);
             
             if (!global.ppSearchCache || !global.ppSearchCache[senderJid]) {
-                return await socket.sendMessage(chat, { 
+                await socket.sendMessage(chat, { 
                     text: '❌ Search expired. Please search again.' 
                 }, { quoted: replyMek });
+                return;
             }
 
             const cached = global.ppSearchCache[senderJid];
             const results = cached.results;
             
             if (paperIndex >= results.length) {
-                return await socket.sendMessage(chat, { 
+                await socket.sendMessage(chat, { 
                     text: '❌ Invalid paper selection.' 
                 }, { quoted: replyMek });
+                return;
             }
 
             const selectedPaper = results[paperIndex];
@@ -935,9 +929,10 @@ END:VCARD`
                 }
 
                 if (!directPdfUrl) {
-                    return await socket.sendMessage(chat, { 
+                    await socket.sendMessage(chat, { 
                         text: `❌ Could not find download link. Try manually:\n${selectedPaper.url}` 
                     }, { quoted: botMention });
+                    return;
                 }
 
                 // Download PDF
@@ -950,9 +945,10 @@ END:VCARD`
                 const fileSizeMB = (fileBuffer.length / (1024 * 1024)).toFixed(2);
 
                 if (fileBuffer.length > 100 * 1024 * 1024) {
-                    return await socket.sendMessage(chat, { 
+                    await socket.sendMessage(chat, { 
                         text: `⚠️ File too large (${fileSizeMB} MB).\nDirect link: ${directPdfUrl}` 
                     }, { quoted: botMention });
+                    return;
                 }
 
                 const fileName = selectedPaper.title
