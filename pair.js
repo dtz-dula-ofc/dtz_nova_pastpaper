@@ -43,7 +43,7 @@ const config = {
     CHANNEL_LINK: 'https://whatsapp.com/channel/0029Vb7GtMHAInPngEYONu0g'
 };
 
-const octokit = new Octokit({ auth: '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' });// ඔයා 𝚐𝚒𝚝𝚑𝚞𝚋 𝚝𝚘𝚔𝚎𝚗 එකක් අරන් ඒක දාන්න
+const octokit = new Octokit({ auth: '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' });// ඔයා 𝚐𝚒𝚝𝚑𝚞𝚋 𝚝𝚘𝚔𝚎𝚗 එකක් අරන් ඒක දාන්න
 const owner = 'dtz-dula-ofc';//𝚐𝚒𝚝𝚑𝚞𝚋 𝙰𝙲𝙲𝙾𝚄𝙽𝚃 එකේ 𝚞𝚜𝚎𝚗𝚊𝚖𝚎 දාන්න 
 const repo = 'dtz_nova_pastpaper';//𝚐𝚒𝚝𝚑𝚞𝚋 𝚛𝚎𝚙𝚘 එකක් හදලා ඒකේ නම දාන්න
 
