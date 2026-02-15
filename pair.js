@@ -21,7 +21,7 @@ const {
     proto,
     prepareWAMessageMedia,
     generateWAMessageFromContent
-} = require(baileys');
+} = require('baileys');
 
 // Global cache for pastpaper search results
 global.ppSearchCache = {};
